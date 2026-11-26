@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - Blue Line{% endblock %}
+
+{% block content %}
+<div class="container py-4" id="dashboardContainer" data-impact-threshold="{{ impact_threshold }}" data-countdown="{{ emergency_countdown }}">
+  
+  <!-- Active Incident Alert Banner if in progress -->
+  {% if summary.has_active_alert %}
+  <div class="alert alert-danger card-emergency-active shadow-sm p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h5 class="alert-heading fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill"></i> ACTIVE EMERGENCY IN PROGRESS</h5>
+      <p class="mb-0 small">Alert #{{ summary.active_alert.id }} ({{ summary.active_alert.emergency_type }}) was activated via {{ summary.active_alert.trigger_type }}. Live tracking is active.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('emergency.active_emergency_screen') }}" class="btn btn-danger fw-bold">
+        <i class="bi bi-broadcast-pin"></i> Open Live Emergency Screen
+      </a>
+      <form method="POST" action="{{ url_for('emergency.resolve_emergency', alert_id=summary.active_alert.id) }}">
+        <button type="submit" class="btn btn-outline-dark btn-sm">I Am Safe</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Dashboard Top Header -->
+  <div class="dashboard-header">
+    <div>
+      <h3 class="fw-bold mb-1 text-primary"><i class="bi bi-shield-shaded"></i> BLUE LINE SAFETY HUB</h3>
+      <p class="text-muted mb-0">Welcome, <strong>{{ summary.user.full_name }}</strong> &bull; {{ summary.user.phone }} &bull; Blood Group: <span class="badge bg-secondary">{{ summary.user.blood_group or 'Not set' }}</span></p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span id="motionStatusPill" class="sensor-pill inactive">
+        <span class="sensor-dot"></span> Impact Protection: OFF
+      </span>
+      <span id="voiceStatusPill" class="sensor-pill inactive">
+        <span class="sensor-dot"></span> Voice Listener: OFF
+      </span>
+    </div>
+  </div>
+
+  <!-- Central SOS Panic Trigger Area -->
+  <div class="row justify-content-center mb-5">
+    <div class="col-lg-8">
+      <div class="card card-custom p-4 text-center border-top border-4 border-danger shadow">
+        <h4 class="fw-bold text-danger mb-1">EMERGENCY SOS SYSTEM</h4>
+        <p class="text-muted small mb-4">Click the button below to instantly trigger emergency dispatch, broadcast GPS coordinates, and notify contacts.</p>
+
+        <div class="sos-button-container">
+          <button type="button" id="btnSos" class="btn btn-sos">
+            <span>SOS</span>
+            <span class="sub-text">PRESS FOR HELP</span>
+          </button>
+        </div>
+
+        <div class="mt-4 p-3 bg-light rounded text-start">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-6 border-end">
+              <div class="form-check form-switch mb-1">
+                <input class="form-check-input" type="checkbox" id="impactToggle">
+                <label class="form-check-label fw-semibold" for="impactToggle">Auto Shake / Impact Detection</label>
+              </div>
+              <small class="text-muted d-block">Monitors device accelerometer (<code>DeviceMotionEvent</code>). Threshold: {{ impact_threshold }} m/s².</small>
+              <button type="button" id="btnSimulateImpact" class="btn btn-sm btn-outline-warning mt-2 py-0">
+                <i class="bi bi-lightning-charge"></i> Simulate Impact (Demo Viva)
+              </button>
+            </div>
+
+            <div class="col-md-6">
+              <div class="form-check form-switch mb-1">
+                <input class="form-check-input" type="checkbox" id="voiceToggle">
+                <label class="form-check-label fw-semibold" for="voiceToggle">Voice Emergency Trigger ("HELP")</label>
+              </div>
+              <small class="text-muted d-block">Web Speech API detects spoken distress keyword "HELP". Audio is not recorded or stored.</small>
+              <button type="button" id="btnSimulateVoice" class="btn btn-sm btn-outline-info mt-2 py-0">
+                <i class="bi bi-mic"></i> Simulate Voice "HELP" (Demo Viva)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric Statistics Cards -->
+  <div class="row g-3 mb-5">
+    <div class="col-md-4">
+      <div class="metric-card bg-blue h-100">
+        <div class="metric-title">Registered Contacts</div>
+        <div class="metric-value">{{ summary.contacts_count }}</div>
+        <small class="opacity-75">Active contacts notified during alert</small>
+        <a href="{{ url_for('contacts.list_contacts') }}" class="btn btn-light btn-sm mt-3 w-100 fw-semibold text-primary">Manage Contacts</a>
+        <i class="bi bi-people metric-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="metric-card bg-green h-100">
+        <div class="metric-title">GPS & Map Tracking</div>
+        <div class="metric-value"><i class="bi bi-geo-alt"></i> Ready</div>
+        <small class="opacity-75">Browser HTML5 Geolocation enabled</small>
+        <a href="{{ url_for('dashboard.live_map') }}" class="btn btn-light btn-sm mt-3 w-100 fw-semibold text-success">Open Map View</a>
+        <i class="bi bi-map metric-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="metric-card bg-purple h-100">
+        <div class="metric-title">Incident History</div>
+        <div class="metric-value">{{ summary.recent_alerts|length }}</div>
+        <small class="opacity-75">Recent alerts recorded on account</small>
+        <a href="{{ url_for('emergency.history') }}" class="btn btn-light btn-sm mt-3 w-100 fw-semibold text-purple">View Full History</a>
+        <i class="bi bi-clock-history metric-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Emergency Incidents & Emergency Helplines -->
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card card-custom p-4 h-100 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-journal-medical text-primary"></i> Recent Emergency Activity</h5>
+          <a href="{{ url_for('emergency.history') }}" class="small text-decoration-none">View All &rarr;</a>
+        </div>
+
+        {% if summary.recent_alerts %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Trigger</th>
+                <th>Status</th>
+                <th>Time (UTC)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for alert in summary.recent_alerts %}
+              <tr>
+                <td>#{{ alert.id }}</td>
+                <td><span class="badge bg-dark">{{ alert.emergency_type }}</span></td>
+                <td><small>{{ alert.trigger_type }}</small></td>
+                <td>
+                  {% if alert.status == 'ACTIVE' %}
+                  <span class="badge badge-active">ACTIVE</span>
+                  {% elif alert.status == 'RESOLVED' %}
+                  <span class="badge badge-resolved">RESOLVED</span>
+                  {% elif alert.status == 'FALSE_ALARM' %}
+                  <span class="badge badge-false-alarm">FALSE ALARM</span>
+                  {% else %}
+                  <span class="badge bg-secondary">{{ alert.status }}</span>
+                  {% endif %}
+                </td>
+                <td><small class="text-muted">{{ alert.created_at[:19] if alert.created_at else 'N/A' }}</small></td>
+                <td>
+                  {% if alert.status == 'ACTIVE' %}
+                  <a href="{{ url_for('emergency.active_emergency_screen') }}" class="btn btn-sm btn-danger py-0">View Live</a>
+                  {% else %}
+                  <a href="{{ url_for('emergency.view_alert', alert_id=alert.id) }}" class="btn btn-sm btn-outline-secondary py-0">Details</a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+          <i class="bi bi-shield-check fs-1 text-success d-block mb-2"></i>
+          No past emergency incidents recorded. Your account is in good standing.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card card-custom p-4 h-100 shadow-sm border-start border-4 border-primary">
+        <h5 class="fw-bold mb-3"><i class="bi bi-telephone-outbound-fill text-danger me-2"></i>Emergency Helplines</h5>
+        <div class="list-group list-group-flush">
+          {% for num in summary.emergency_numbers %}
+          <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ num.name }}</strong>
+              <div class="small text-muted">{{ num.description or 'National Emergency Number' }}</div>
+            </div>
+            <a href="tel:{{ num.number }}" class="btn btn-outline-danger btn-sm fw-bold">
+              <i class="bi bi-telephone-fill"></i> {{ num.number }}
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 1: Emergency Type & Description Modal -->
+<div class="modal fade" id="emergencyTypeModal" tabindex="-1" aria-labelledby="emergencyTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger shadow">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="emergencyTypeModalLabel">
+          <i class="bi bi-exclamation-octagon-fill me-2"></i> Specify Emergency Nature
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning small mb-3">
+          <i class="bi bi-info-circle"></i> Selecting the nature helps first responders and family prioritize response.
+        </div>
+        <div class="mb-3">
+          <label for="modalEmergencyType" class="form-label fw-bold">What is happening?</label>
+          <select class="form-select form-select-lg" id="modalEmergencyType">
+            <option value="ROBBERY">Robbery / Mugging</option>
+            <option value="THEFT">Theft / Snatching</option>
+            <option value="ACCIDENT">Accident / Collision</option>
+            <option value="MEDICAL">Medical Emergency</option>
+            <option value="ASSAULT">Physical Assault</option>
+            <option value="HARASSMENT">Harassment / Stalking</option>
+            <option value="FIRE">Fire Hazard</option>
+            <option value="OTHER" selected>Other Emergency</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="modalEmergencyDescription" class="form-label fw-bold">Additional Remarks (Optional)</label>
+          <textarea class="form-control" id="modalEmergencyDescription" rows="2" placeholder="e.g. Someone attempted to take my wallet near the subway entrance."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="btnConfirmSosModal" class="btn btn-danger fw-bold px-4">
+          <i class="bi bi-send-fill me-1"></i> Proceed to Dispatch
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: Fullscreen 10-Second Countdown Overlay -->
+<div id="countdownOverlay" class="countdown-overlay d-none">
+  <div class="text-center p-4" style="max-width: 550px;">
+    <div class="fs-1 text-warning mb-2"><i class="bi bi-exclamation-triangle-fill"></i></div>
+    <h2 id="countdownTriggerLabel" class="fw-bold mb-1">POSSIBLE EMERGENCY DETECTED!</h2>
+    <p class="text-light opacity-90 small mb-2">Acquiring GPS coordinates. Emergency dispatch will trigger automatically in:</p>
+    
+    <div id="countdownNumber" class="countdown-number">10</div>
+    <p class="text-warning small fw-bold">SECONDS</p>
+
+    <p class="small mb-2 opacity-90">What is happening? Tap to change the emergency type:</p>
+    <div id="countdownTypeChips" class="d-flex flex-wrap justify-content-center gap-2"></div>
+
+    <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+      <button type="button" id="btnCancelCountdown" class="btn btn-success btn-lg px-4 fw-bold shadow">
+        <i class="bi bi-check-circle-fill me-1"></i> I AM SAFE - CANCEL
+      </button>
+      <button type="button" id="btnSendNowCountdown" class="btn btn-danger btn-lg px-4 fw-bold shadow">
+        <i class="bi bi-broadcast me-1"></i> SEND ALERT NOW
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

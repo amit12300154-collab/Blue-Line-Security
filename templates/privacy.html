@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy, Ethics & Disclaimers - Blue Line{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card card-custom p-5 shadow-sm">
+        <h2 class="fw-bold text-primary mb-3"><i class="bi bi-shield-check"></i> Privacy Policy & Academic Disclosure</h2>
+        <p class="text-muted">Last updated: Academic Year 2026 &bull; Major Project Submission</p>
+        <hr class="mb-4">
+
+        <div class="alert alert-warning">
+          <strong><i class="bi bi-info-circle-fill"></i> ACADEMIC RESEARCH PROTOTYPE DISCLAIMER:</strong>
+          Blue Line is developed as a University B.Tech Major Project prototype. In Demo Mode, emergency contact dispatches and police notifications are simulated to demonstrate software architecture and algorithms without incurring commercial SMS/telephony fees or transmitting false distress signals to civil emergency dispatchers.
+        </div>
+
+        <h5 class="fw-bold text-dark mt-4">1. Geolocation Data Processing</h5>
+        <p class="text-muted">
+          Your precise device location (latitude, longitude, and accuracy) is acquired through the W3C Geolocation API only when an emergency event is triggered (or when explicitly testing the location feature). Real-time breadcrumbs are logged during an active incident and GPS tracking stops immediately once the user marks the emergency as "Resolved" or "False Alarm".
+        </p>
+
+        <h5 class="fw-bold text-dark mt-4">2. Sensor & Motion Information</h5>
+        <p class="text-muted">
+          Accelerometer readings via <code>DeviceMotionEvent</code> are processed entirely on the client-side device. Sensor data is never streamed to external servers or logged persistently unless a sudden impact threshold is crossed and confirmed by the user.
+        </p>
+
+        <h5 class="fw-bold text-dark mt-4">3. Voice Emergency Keyword Detection</h5>
+        <p class="text-muted">
+          Voice monitoring uses the browser's native Web Speech API solely to listen for the configured distress trigger word (such as "HELP"). <strong>No audio files are recorded, uploaded, or stored on our servers.</strong>
+        </p>
+
+        <h5 class="fw-bold text-dark mt-4">4. Police Station Information & Distance Matching</h5>
+        <p class="text-muted">
+          Nearest police station calculation is performed using the mathematical Haversine great-circle distance algorithm against verified records stored in our database. <strong>The application does NOT transmit automated calls to real police stations without external authorized government API integrations.</strong>
+        </p>
+
+        <h5 class="fw-bold text-dark mt-4">5. Responsible Emergency Use</h5>
+        <p class="text-muted">
+          In real life-threatening circumstances, users must always prioritize dialing national emergency helplines directly:
+          <strong class="text-danger">112 (National Emergency Support)</strong>,
+          <strong class="text-danger">100 (Police)</strong>, or
+          <strong class="text-danger">108 (Ambulance)</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

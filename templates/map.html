@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Emergency Map - Blue Line{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-2">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0 text-primary"><i class="bi bi-map-fill"></i> Live Tactical Safety Map</h4>
+      <small class="text-muted">Displays your live GPS position alongside registered emergency response stations.</small>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" id="btnRecenter" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-crosshair"></i> Locate My Position
+      </button>
+      <a href="{{ url_for('dashboard.user_dashboard') }}" class="btn btn-sm btn-secondary">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="card card-custom p-2 shadow-sm">
+    <div id="fullScreenMap" class="leaflet-map-fullscreen"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const map = MapManager.init('fullScreenMap', 28.6139, 77.2090, 13);
+
+  // Fetch verified police stations to display on map
+  fetch('/api/police-stations')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.data) {
+        data.data.forEach(station => {
+          MapManager.setPoliceStationMarker(
+            station.latitude,
+            station.longitude,
+            station.station_name,
+            station.address,
+            station.phone_number
+          );
+        });
+      }
+    })
+    .catch(err => console.error("Error loading stations on map:", err));
+
+  // Locate user immediately
+  LocationManager.getCurrentPosition()
+    .then(coords => {
+      MapManager.updateUserMarker(coords.latitude, coords.longitude, coords.accuracy, "Your Device Location");
+      map.setView([coords.latitude, coords.longitude], 14);
+    })
+    .catch(err => {
+      console.warn("GPS resolution error:", err.message);
+    });
+
+  document.getElementById('btnRecenter').addEventListener('click', () => {
+    LocationManager.getCurrentPosition()
+      .then(coords => {
+        MapManager.updateUserMarker(coords.latitude, coords.longitude, coords.accuracy, "Your Device Location");
+        map.setView([coords.latitude, coords.longitude], 15);
+      })
+      .catch(err => alert(err.message));
+  });
+});
+</script>
+{% endblock %}

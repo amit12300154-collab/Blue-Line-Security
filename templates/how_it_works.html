@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}How It Works - Blue Line Safety Architecture{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-5">
+    <span class="badge bg-primary px-3 py-2 rounded-pill text-uppercase mb-2">Architectural Workflow</span>
+    <h1 class="fw-bold">How Blue Line Protects You</h1>
+    <p class="lead text-muted mx-auto" style="max-width: 700px;">
+      A 9-step fail-safe workflow engineered to verify threats, prevent false alarms, and dispatch emergency response coordinates immediately.
+    </p>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    <!-- Step 1 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-primary">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-primary fs-5 px-3 py-2 rounded-circle">1</div>
+          <h5 class="fw-bold mb-0">User Registration</h5>
+        </div>
+        <p class="text-muted small">Create a secure profile with phone number, home address, and blood group. Passwords are encrypted using Werkzeug PBKDF2 hashing.</p>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-primary">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-primary fs-5 px-3 py-2 rounded-circle">2</div>
+          <h5 class="fw-bold mb-0">Add Emergency Contacts</h5>
+        </div>
+        <p class="text-muted small">Store verified family and friends with phone numbers and relationships (Father, Mother, Friend) and priority order.</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-primary">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-primary fs-5 px-3 py-2 rounded-circle">3</div>
+          <h5 class="fw-bold mb-0">Enable Protection</h5>
+        </div>
+        <p class="text-muted small">Toggle physical impact detection (accelerometer) or hands-free distress keyword monitoring ("HELP") right from your dashboard.</p>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-warning">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-warning text-dark fs-5 px-3 py-2 rounded-circle">4</div>
+          <h5 class="fw-bold mb-0">Emergency Detected</h5>
+        </div>
+        <p class="text-muted small">Triggered either manually via the large SOS button, by physical shock (>25 m/s²), or spoken distress keywords.</p>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-warning">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-warning text-dark fs-5 px-3 py-2 rounded-circle">5</div>
+          <h5 class="fw-bold mb-0">10-Second Countdown</h5>
+        </div>
+        <p class="text-muted small">A critical safety window allows the user to tap "I am Safe - Cancel" to prevent accidental triggers and avoid false alarm panic.</p>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-danger">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-danger fs-5 px-3 py-2 rounded-circle">6</div>
+          <h5 class="fw-bold mb-0">GPS Location Resolution</h5>
+        </div>
+        <p class="text-muted small">HTML5 Geolocation API resolves current latitude, longitude, and accuracy radius, generating a dynamic Google Maps URL.</p>
+      </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-danger">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-danger fs-5 px-3 py-2 rounded-circle">7</div>
+          <h5 class="fw-bold mb-0">Contacts Notified</h5>
+        </div>
+        <p class="text-muted small">The notification engine transmits structured incident details, live navigation links, and incident nature to all active contacts.</p>
+      </div>
+    </div>
+
+    <!-- Step 8 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-danger">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-danger fs-5 px-3 py-2 rounded-circle">8</div>
+          <h5 class="fw-bold mb-0">Live Tracking & Police Lookup</h5>
+        </div>
+        <p class="text-muted small">Continuous GPS streaming updates the Leaflet map while the Haversine formula identifies the closest registered police station.</p>
+      </div>
+    </div>
+
+    <!-- Step 9 -->
+    <div class="col-md-4">
+      <div class="card card-custom p-4 h-100 border-top border-4 border-success">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="badge bg-success fs-5 px-3 py-2 rounded-circle">9</div>
+          <h5 class="fw-bold mb-0">Incident Resolution</h5>
+        </div>
+        <p class="text-muted small">Once safe, the user taps "Resolve Emergency". GPS watchPosition is cleared and the complete trajectory is preserved in database history.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

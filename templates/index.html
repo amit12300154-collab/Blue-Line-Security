@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Blue Line - Smart Emergency Safety & Response System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-banner text-center py-5">
+  <div class="container">
+    <div class="badge bg-primary px-3 py-2 rounded-pill mb-3 text-uppercase letter-spacing-1">
+      <i class="bi bi-shield-check"></i> Advanced Personal Safety Platform
+    </div>
+    <h1 class="display-4 fw-bold mb-3">BLUE LINE</h1>
+    <p class="lead mb-4 text-light opacity-90 mx-auto" style="max-width: 760px;">
+      Detect possible emergencies, broadcast live GPS coordinates to trusted contacts, locate nearest police stations, and coordinate emergency response from one unified platform.
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('dashboard.user_dashboard') }}" class="btn btn-warning btn-lg px-4 fw-bold shadow">
+        <i class="bi bi-speedometer2"></i> Open Safety Dashboard
+      </a>
+      {% else %}
+      <a href="{{ url_for('auth.register') }}" class="btn btn-danger btn-lg px-4 fw-bold shadow">
+        <i class="bi bi-shield-plus"></i> Register For Protection
+      </a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4">
+        <i class="bi bi-box-arrow-in-right"></i> Sign In
+      </a>
+      {% endif %}
+      <a href="{{ url_for('dashboard.how_it_works') }}" class="btn btn-secondary btn-lg px-4">
+        <i class="bi bi-diagram-3"></i> How It Works
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Core Features Grid -->
+<div class="container my-5">
+  <div class="text-center mb-5">
+    <h2 class="fw-bold">Multi-Modal Emergency Detection & Tracking</h2>
+    <p class="text-muted">Engineered to trigger alerts automatically or manually with zero delay</p>
+  </div>
+
+  <div class="row g-4">
+    <!-- Feature 1: Manual SOS -->
+    <div class="col-md-4">
+      <div class="card card-custom h-100 p-4">
+        <div class="text-danger fs-1 mb-3"><i class="bi bi-exclamation-octagon-fill"></i></div>
+        <h4 class="fw-bold">1-Click Panic Button</h4>
+        <p class="text-muted">Instant SOS activation with a prominent UI button. Acquires GPS coordinates and dispatches alerts to family and friends within seconds.</p>
+      </div>
+    </div>
+
+    <!-- Feature 2: Phone Shake / Impact -->
+    <div class="col-md-4">
+      <div class="card card-custom h-100 p-4">
+        <div class="text-warning fs-1 mb-3"><i class="bi bi-phone-vibrate-fill"></i></div>
+        <h4 class="fw-bold">Impact & Shake Detection</h4>
+        <p class="text-muted">Utilizes device accelerometer sensors (<code>DeviceMotionEvent</code>) to detect sudden violent motion, collisions, or falls with a configurable 10-second safety cancellation window.</p>
+      </div>
+    </div>
+
+    <!-- Feature 3: Voice Keyword Trigger -->
+    <div class="col-md-4">
+      <div class="card card-custom h-100 p-4">
+        <div class="text-info fs-1 mb-3"><i class="bi bi-mic-fill"></i></div>
+        <h4 class="fw-bold">Voice Keyword Activation</h4>
+        <p class="text-muted">Hands-free emergency triggering via browser Web Speech recognition. Calling out <strong>"HELP"</strong> initiates the safety verification countdown automatically.</p>
+      </div>
+    </div>
+
+    <!-- Feature 4: Live GPS Tracking -->
+    <div class="col-md-4">
+      <div class="card card-custom h-100 p-4">
+        <div class="text-primary fs-1 mb-3"><i class="bi bi-geo-alt-fill"></i></div>
+        <h4 class="fw-bold">Live GPS & Trajectory</h4>
+        <p class="text-muted">Continuous location streaming with accuracy estimation via Leaflet.js & OpenStreetMap. Generates Google Maps navigation hyperlinks for emergency contacts.</p>
+      </div>
+    </div>
+
+    <!-- Feature 5: Nearest Police Station -->
+    <div class="col-md-4">
+      <div class="card card-custom h-100 p-4">
+        <div class="text-dark fs-1 mb-3"><i class="bi bi-building-shield"></i></div>
+        <h4 class="fw-bold">Nearest Police Station</h4>
+        <p class="text-muted">Calculates the closest verified police station using the mathematical <em>Haversine Great-Circle Formula</em> from our database records, displaying distance and helpline info.</p>
+      </div>
+    </div>
+
+    <!-- Feature 6: Central Admin Control -->
+    <div class="col-md-4">
+      <div class="card card-custom h-100 p-4">
+        <div class="text-success fs-1 mb-3"><i class="bi bi-motherboard-fill"></i></div>
+        <h4 class="fw-bold">Emergency Dispatch Hub</h4>
+        <p class="text-muted">Full administrative command center monitoring active incidents in real time, managing police stations, and maintaining immutable historical logs.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- National Helplines Strip -->
+<div class="container mb-5">
+  <div class="card card-custom p-4 border-start border-4 border-danger">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h5 class="fw-bold mb-1"><i class="bi bi-telephone-fill text-danger me-2"></i>Official Emergency Helpline Numbers (India)</h5>
+        <p class="text-muted mb-0 small">Direct emergency contacts configured in the Blue Line registry</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% for helpline in helplines %}
+        <a href="tel:{{ helpline.number }}" class="btn btn-outline-danger btn-sm">
+          <strong>{{ helpline.number }}</strong> - {{ helpline.name }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

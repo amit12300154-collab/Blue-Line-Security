@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Command Hub - Blue Line{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold text-primary mb-1"><i class="bi bi-shield-shaded"></i> Administrator Command Hub</h2>
+      <p class="text-muted mb-0">System-wide surveillance, real-time emergency incidents, and infrastructure management.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.list_alerts') }}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-exclamation-triangle"></i> All Incidents
+      </a>
+      <a href="{{ url_for('admin.list_police_stations') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-building"></i> Manage Stations
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Counters Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+      <div class="metric-card bg-red">
+        <div class="metric-title">Active Emergencies</div>
+        <div class="metric-value">{{ metrics.active_emergencies }}</div>
+        <i class="bi bi-broadcast metric-icon"></i>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+      <div class="metric-card bg-green">
+        <div class="metric-title">Resolved Incidents</div>
+        <div class="metric-value">{{ metrics.resolved_emergencies }}</div>
+        <i class="bi bi-check-circle metric-icon"></i>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+      <div class="metric-card bg-amber">
+        <div class="metric-title">False Alarms</div>
+        <div class="metric-value">{{ metrics.false_alarms }}</div>
+        <i class="bi bi-bell-slash metric-icon"></i>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+      <div class="metric-card bg-blue">
+        <div class="metric-title">Registered Users</div>
+        <div class="metric-value">{{ metrics.total_users }}</div>
+        <i class="bi bi-people metric-icon"></i>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+      <div class="metric-card bg-purple">
+        <div class="metric-title">Police Stations</div>
+        <div class="metric-value">{{ metrics.total_police_stations }}</div>
+        <i class="bi bi-building metric-icon"></i>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+      <div class="metric-card bg-secondary">
+        <div class="metric-title">Emergency Helplines</div>
+        <div class="metric-value">{{ metrics.emergency_numbers_count }}</div>
+        <i class="bi bi-telephone metric-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Tactical Map -->
+  <div class="card card-custom p-4 shadow-sm mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0 text-danger"><i class="bi bi-geo-alt-fill"></i> Real-Time Emergency Incident Map</h5>
+      <span class="badge bg-danger"><i class="bi bi-record-circle"></i> Live Fleet Monitoring</span>
+    </div>
+    <div id="adminLiveMap" class="leaflet-map-box" style="height: 400px;"></div>
+  </div>
+
+  <!-- Active Emergencies Table -->
+  <div class="card card-custom p-4 shadow-sm mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0 text-danger"><i class="bi bi-broadcast-pin"></i> Active Distress Alerts</h5>
+      <span class="badge bg-danger">{{ active_alerts|length }} Ongoing</span>
+    </div>
+
+    {% if active_alerts %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Alert ID</th>
+            <th>Citizen Name</th>
+            <th>Emergency Type</th>
+            <th>Trigger Source</th>
+            <th>Coordinates</th>
+            <th>Nearest Police Station</th>
+            <th>Trigger Time (UTC)</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for alert in active_alerts %}
+          <tr>
+            <td class="fw-bold text-danger">#{{ alert.id }}</td>
+            <td>
+              <strong>{{ alert.user.full_name }}</strong>
+              <div class="small text-muted">{{ alert.user.phone }}</div>
+            </td>
+            <td><span class="badge bg-danger">{{ alert.emergency_type }}</span></td>
+            <td><small class="badge bg-light text-dark border">{{ alert.trigger_type }}</small></td>
+            <td>
+              {% if alert.latitude and alert.longitude %}
+              <a href="{{ alert.google_maps_url }}" target="_blank" class="small text-decoration-none">
+                {{ "%.4f"|format(alert.latitude) }}, {{ "%.4f"|format(alert.longitude) }}
+                <i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              {% else %}
+              <small class="text-muted">Acquiring GPS...</small>
+              {% endif %}
+            </td>
+            <td>
+              {% if alert.nearest_police_station %}
+              <small>{{ alert.nearest_police_station.station_name }}</small>
+              {% else %}
+              <small class="text-muted">Pending coordinate resolution</small>
+              {% endif %}
+            </td>
+            <td><small>{{ alert.created_at.strftime('%H:%M:%S UTC') if alert.created_at else 'Just now' }}</small></td>
+            <td class="text-end">
+              <a href="{{ url_for('admin.alert_details', alert_id=alert.id) }}" class="btn btn-sm btn-primary py-0 me-1">
+                <i class="bi bi-eye"></i> Inspect
+              </a>
+              <form method="POST" action="{{ url_for('admin.resolve_alert_admin', alert_id=alert.id) }}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-success py-0" onclick="return confirm('Resolve alert #{{ alert.id }}?')">
+                  Resolve
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-shield-check fs-2 text-success d-block mb-1"></i>
+      All systems clear. No active distress signals at this time.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const adminMap = MapManager.init('adminLiveMap', 28.6139, 77.2090, 11);
+
+  // Plot active alerts
+  const activeAlerts = [
+    {% for a in active_alerts %}
+      {% if a.latitude and a.longitude %}
+      {
+        id: {{ a.id }},
+        lat: {{ a.latitude }},
+        lon: {{ a.longitude }},
+        userName: "{{ a.user.full_name }}",
+        userPhone: "{{ a.user.phone }}",
+        emergencyType: "{{ a.emergency_type }}",
+        time: "{{ a.created_at.strftime('%H:%M:%S') if a.created_at else '' }}"
+      },
+      {% endif %}
+    {% endfor %}
+  ];
+
+  activeAlerts.forEach(a => {
+    const alertIcon = L.divIcon({
+      className: 'alert-pin',
+      html: `<div style="
+        width: 24px;
+        height: 24px;
+        background: #e74c3c;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px red;
+      "></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    const marker = L.marker([a.lat, a.lon], { icon: alertIcon }).addTo(adminMap);
+    marker.bindPopup(`
+      <strong>🚨 Alert #${a.id}</strong><br>
+      <b>Citizen:</b> ${a.userName} (${a.userPhone})<br>
+      <b>Type:</b> ${a.emergencyType}<br>
+      <b>Time:</b> ${a.time}<br>
+      <a href="/admin/alerts/${a.id}" class="btn btn-sm btn-danger py-0 text-white mt-1">Open Dispatch View</a>
+    `);
+  });
+
+  // Plot police stations
+  fetch('/api/police-stations')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.data) {
+        data.data.forEach(station => {
+          MapManager.setPoliceStationMarker(
+            station.latitude,
+            station.longitude,
+            station.station_name,
+            station.address,
+            station.phone_number
+          );
+        });
+      }
+    });
+});
+</script>
+{% endblock %}

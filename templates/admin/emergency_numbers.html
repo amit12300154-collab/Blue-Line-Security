@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Emergency Helpline Numbers - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold text-primary mb-1"><i class="bi bi-telephone-fill text-danger"></i> Emergency Helpline Numbers</h2>
+      <p class="text-muted mb-0">Configurable civil emergency helplines displayed to users across dashboards.</p>
+    </div>
+    <button type="button" class="btn btn-danger fw-bold" data-bs-toggle="modal" data-bs-target="#addNumberModal">
+      <i class="bi bi-plus-circle me-1"></i> Add Helpline Number
+    </button>
+  </div>
+
+  <div class="card card-custom p-4 shadow-sm">
+    {% if numbers %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Helpline Name</th>
+            <th>Short Code / Number</th>
+            <th>Jurisdiction</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for num in numbers %}
+          <tr>
+            <td class="fw-bold">{{ num.name }}</td>
+            <td><span class="badge bg-danger fs-6">{{ num.number }}</span></td>
+            <td>{{ num.country }}{% if num.state %} ({{ num.state }}){% endif %}</td>
+            <td><small class="text-muted">{{ num.description or '-' }}</small></td>
+            <td>
+              {% if num.is_active %}
+              <span class="badge bg-success">Active</span>
+              {% else %}
+              <span class="badge bg-secondary">Deactivated</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <form method="POST" action="{{ url_for('admin.toggle_emergency_number', num_id=num.id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi {{ 'bi-pause-fill' if num.is_active else 'bi-play-fill' }}"></i>
+                  </button>
+                </form>
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editNumberModal{{ num.id }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="POST" action="{{ url_for('admin.delete_emergency_number', num_id=num.id) }}" class="d-inline" onsubmit="return confirm('Delete helpline number?')">
+                  <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+
+              <!-- Edit Modal -->
+              <div class="modal fade text-start" id="editNumberModal{{ num.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form method="POST" action="{{ url_for('admin.edit_emergency_number', num_id=num.id) }}">
+                      <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Edit Helpline</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Helpline Service Name</label>
+                          <input type="text" class="form-control" name="name" value="{{ num.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Phone / Short Code</label>
+                          <input type="text" class="form-control" name="number" value="{{ num.number }}" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">Country</label>
+                            <input type="text" class="form-control" name="country" value="{{ num.country }}" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">State / Region</label>
+                            <input type="text" class="form-control" name="state" value="{{ num.state or '' }}">
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Description</label>
+                          <textarea class="form-control" name="description" rows="2">{{ num.description or '' }}</textarea>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="is_active" id="activeEdit{{ num.id }}" {% if num.is_active %}checked{% endif %}>
+                          <label class="form-check-label fw-semibold" for="activeEdit{{ num.id }}">Active Helpline</label>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-bold">Save Changes</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-4">No helpline numbers registered.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Add Number Modal -->
+<div class="modal fade" id="addNumberModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_emergency_number') }}">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-1"></i> Add Helpline Number</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Service Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" required placeholder="e.g. Disaster Management Helpline">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Dialing Number / Code <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="number" required placeholder="e.g. 1070">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Country <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="country" value="India" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">State / Region (Optional)</label>
+              <input type="text" class="form-control" name="state" placeholder="e.g. National or Delhi">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea class="form-control" name="description" rows="2" placeholder="Brief description of service"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger fw-bold">Register Helpline</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

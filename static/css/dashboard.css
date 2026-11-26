@@ -1,0 +1,109 @@
+/* Dashboard Specific Styles */
+.dashboard-header {
+  background: #ffffff;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.metric-card {
+  border-radius: 12px;
+  padding: 20px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.metric-card .metric-icon {
+  position: absolute;
+  right: 15px;
+  bottom: 10px;
+  font-size: 3.5rem;
+  opacity: 0.2;
+}
+
+.metric-card.bg-blue {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.metric-card.bg-red {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+}
+
+.metric-card.bg-green {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.metric-card.bg-amber {
+  background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+}
+
+.metric-card.bg-purple {
+  background: linear-gradient(135deg, #654ea3 0%, #eaafc8 100%);
+}
+
+.metric-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.metric-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 5px 0 0 0;
+}
+
+/* Sensor Status Indicator Pill */
+.sensor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sensor-pill.active {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.sensor-pill.inactive {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.sensor-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+/* Active Alert Card pulsing border */
+.card-emergency-active {
+  border: 2px solid #e74c3c !important;
+  animation: border-blink 1.8s infinite;
+}
+
+@keyframes border-blink {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(231, 76, 60, 0.7);
+  }
+}

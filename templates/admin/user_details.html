@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}User Details: {{ user.full_name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-3">
+    <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Back to User Directory
+    </a>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- User Overview Card -->
+    <div class="col-md-5">
+      <div class="card card-custom p-4 shadow-sm h-100">
+        <h4 class="fw-bold text-primary mb-3"><i class="bi bi-person-lines-fill"></i> User Information</h4>
+        <ul class="list-group list-group-flush small">
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">User ID:</span>
+            <strong>#{{ user.id }}</strong>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Full Name:</span>
+            <strong>{{ user.full_name }}</strong>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Email:</span>
+            <strong>{{ user.email }}</strong>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Phone:</span>
+            <strong>{{ user.phone }}</strong>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Blood Group:</span>
+            <span class="badge bg-secondary">{{ user.blood_group or 'Not specified' }}</span>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Address:</span>
+            <span>{{ user.address or 'None recorded' }}</span>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Role:</span>
+            <span class="badge bg-{{ 'danger' if user.role == 'ADMIN' else 'primary' }}">{{ user.role }}</span>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Account Status:</span>
+            <span class="badge bg-{{ 'success' if user.is_active else 'warning' }}">{{ 'Active' if user.is_active else 'Deactivated' }}</span>
+          </li>
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span class="text-muted">Registered On:</span>
+            <span>{{ user.created_at.strftime('%Y-%m-%d %H:%M UTC') if user.created_at else 'N/A' }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Emergency Contacts Card -->
+    <div class="col-md-7">
+      <div class="card card-custom p-4 shadow-sm h-100">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-people text-success"></i> Registered Emergency Contacts ({{ user.emergency_contacts.count() }})</h5>
+        {% if user.emergency_contacts.count() > 0 %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Priority</th>
+                <th>Name</th>
+                <th>Relationship</th>
+                <th>Phone</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in user.emergency_contacts %}
+              <tr>
+                <td>#{{ c.priority }}</td>
+                <td class="fw-bold">{{ c.name }}</td>
+                <td><span class="badge bg-light text-dark border">{{ c.relationship }}</span></td>
+                <td>{{ c.phone }}</td>
+                <td>{{ c.email or '-' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small">No emergency contacts registered by this user.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident History Card -->
+  <div class="card card-custom p-4 shadow-sm">
+    <h5 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle"></i> Emergency Incident History ({{ user.emergency_alerts.count() }})</h5>
+    {% if user.emergency_alerts.count() > 0 %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Alert ID</th>
+            <th>Type</th>
+            <th>Trigger</th>
+            <th>Time (UTC)</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in user.emergency_alerts %}
+          <tr>
+            <td>#{{ a.id }}</td>
+            <td><span class="badge bg-dark">{{ a.emergency_type }}</span></td>
+            <td><small>{{ a.trigger_type }}</small></td>
+            <td><small>{{ a.created_at.strftime('%Y-%m-%d %H:%M') if a.created_at else 'N/A' }}</small></td>
+            <td>
+              <span class="badge bg-{{ 'danger' if a.status == 'ACTIVE' else ('success' if a.status == 'RESOLVED' else 'secondary') }}">
+                {{ a.status }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('admin.alert_details', alert_id=a.id) }}" class="btn btn-sm btn-outline-primary py-0">
+                Inspect
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted small">No incidents recorded for this user.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

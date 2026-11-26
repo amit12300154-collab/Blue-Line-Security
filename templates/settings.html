@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Sensor & Safety Settings - Blue Line{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card card-custom p-4 shadow-sm">
+        <h3 class="fw-bold text-primary mb-1"><i class="bi bi-sliders"></i> Sensor & Safety Preferences</h3>
+        <p class="text-muted small mb-4">Fine-tune impact detection sensitivity, voice triggers, and emergency dispatch countdown duration.</p>
+
+        <div class="alert alert-info small mb-4">
+          <i class="bi bi-info-circle-fill"></i> <strong>Sensor Architecture Note:</strong>
+          Sensor detection depends on mobile device accelerometer hardware and browser security policies (e.g. HTTPS requirement in production).
+        </div>
+
+        <form id="settingsForm">
+          <!-- Impact Sensitivity -->
+          <div class="mb-4">
+            <label class="form-label fw-bold">Impact / Shake Sensor Sensitivity</label>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="form-check p-3 border rounded">
+                  <input class="form-check-input" type="radio" name="sensitivity" id="sensLow" value="35.0">
+                  <label class="form-check-label fw-semibold" for="sensLow">Low Sensitivity</label>
+                  <small class="text-muted d-block">Requires heavy impact or forceful shaking (35 m/s²).</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check p-3 border rounded">
+                  <input class="form-check-input" type="radio" name="sensitivity" id="sensMed" value="25.0" checked>
+                  <label class="form-check-label fw-semibold" for="sensMed">Medium (Default)</label>
+                  <small class="text-muted d-block">Balanced for vehicular collisions and hard drops (25 m/s²).</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check p-3 border rounded">
+                  <input class="form-check-input" type="radio" name="sensitivity" id="sensHigh" value="15.0">
+                  <label class="form-check-label fw-semibold" for="sensHigh">High Sensitivity</label>
+                  <small class="text-muted d-block">Triggers on moderate motion or brisk shakes (15 m/s²).</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Countdown Timer -->
+          <div class="mb-4">
+            <label for="countdownSelect" class="form-label fw-bold">Safety Verification Countdown Duration</label>
+            <select class="form-select" id="countdownSelect">
+              <option value="5">5 Seconds (Urgent response)</option>
+              <option value="10" selected>10 Seconds (Standard university demo default)</option>
+              <option value="15">15 Seconds (Extra safety cancellation buffer)</option>
+              <option value="30">30 Seconds (Extended window)</option>
+            </select>
+            <div class="input-group mt-2">
+              <span class="input-group-text">Custom (3-120 sec)</span>
+              <input type="number" class="form-control" id="countdownCustom" min="3" max="120" placeholder="e.g. 20">
+            </div>
+            <small class="text-muted">During this countdown period, you can tap "I am Safe" to prevent an emergency broadcast. A custom value overrides the list above.</small>
+          </div>
+
+          <!-- Voice Keyword -->
+          <div class="mb-4">
+            <label for="voiceKeywordInput" class="form-label fw-bold">Voice Distress Keyword</label>
+            <input type="text" class="form-control" id="voiceKeywordInput" value="help" placeholder="e.g. help">
+            <small class="text-muted">Keyword listened for by the browser's Web Speech API when voice protection is enabled.</small>
+          </div>
+
+          <button type="button" id="btnSaveSettings" class="btn btn-primary fw-bold px-4">
+            <i class="bi bi-check2-circle me-1"></i> Save Preferences
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Load stored settings from localStorage
+  const storedThreshold = localStorage.getItem('blueline_impact_threshold') || '25.0';
+  const storedCountdown = localStorage.getItem('blueline_countdown_sec') || '10';
+  const storedKeyword = localStorage.getItem('blueline_voice_keyword') || 'help';
+
+  document.querySelectorAll('input[name="sensitivity"]').forEach(radio => {
+    if (radio.value === storedThreshold) radio.checked = true;
+  });
+
+  const select = document.getElementById('countdownSelect');
+  const custom = document.getElementById('countdownCustom');
+  if ([...select.options].some(o => o.value === storedCountdown)) {
+    select.value = storedCountdown;
+  } else {
+    custom.value = storedCountdown;
+  }
+  document.getElementById('voiceKeywordInput').value = storedKeyword;
+
+  document.getElementById('btnSaveSettings').addEventListener('click', () => {
+    const selectedSens = document.querySelector('input[name="sensitivity"]:checked').value;
+    let selectedCountdown = document.getElementById('countdownSelect').value;
+    const customVal = parseInt(document.getElementById('countdownCustom').value, 10);
+    if (!isNaN(customVal)) {
+      if (customVal < 3 || customVal > 120) { alert('Custom countdown must be between 3 and 120 seconds.'); return; }
+      selectedCountdown = String(customVal);
+    }
+    const selectedKeyword = document.getElementById('voiceKeywordInput').value.trim().toLowerCase() || 'help';
+
+    localStorage.setItem('blueline_impact_threshold', selectedSens);
+    localStorage.setItem('blueline_countdown_sec', selectedCountdown);
+    localStorage.setItem('blueline_voice_keyword', selectedKeyword);
+
+    alert("Preferences saved on this device!");
+    window.location.href = "{{ url_for('dashboard.user_dashboard') }}";
+  });
+});
+</script>
+{% endblock %}

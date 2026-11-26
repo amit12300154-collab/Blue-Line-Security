@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Police Stations Registry - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold text-primary mb-1"><i class="bi bi-building"></i> Police Stations Registry</h2>
+      <p class="text-muted mb-0">Stations used for Haversine proximity calculations during active emergency dispatches.</p>
+    </div>
+    <button type="button" class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addStationModal">
+      <i class="bi bi-plus-circle me-1"></i> Add Police Station
+    </button>
+  </div>
+
+  <div class="alert alert-warning small mb-4">
+    <i class="bi bi-exclamation-circle-fill"></i> <strong>Simulation Notice:</strong>
+    Preloaded records are clearly marked as <code>(DEMO DATA)</code> for university presentation. Ensure real-world verified stations are entered before operational deployment.
+  </div>
+
+  <div class="card card-custom p-4 shadow-sm">
+    {% if stations %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Station Name</th>
+            <th>City / State</th>
+            <th>Coordinates (Lat, Lon)</th>
+            <th>Helpline / Phone</th>
+            <th>Verification</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in stations %}
+          <tr>
+            <td class="fw-bold">{{ s.station_name }}<br><small class="text-muted">{{ s.address }}</small></td>
+            <td>{{ s.city }}, {{ s.state }}</td>
+            <td><code>{{ "%.4f"|format(s.latitude) }}, {{ "%.4f"|format(s.longitude) }}</code></td>
+            <td>
+              <span class="badge bg-danger">{{ s.emergency_number }}</span>
+              {% if s.phone_number %}
+              <div class="small text-muted">{{ s.phone_number }}</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if s.is_verified %}
+              <span class="badge bg-success"><i class="bi bi-patch-check-fill"></i> Verified</span>
+              {% else %}
+              <span class="badge bg-secondary">Unverified</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <form method="POST" action="{{ url_for('admin.toggle_verify_police_station', station_id=s.id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-outline-secondary" title="Toggle verification">
+                    <i class="bi {{ 'bi-patch-minus' if s.is_verified else 'bi-patch-check' }}"></i>
+                  </button>
+                </form>
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editStationModal{{ s.id }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="POST" action="{{ url_for('admin.delete_police_station', station_id=s.id) }}" class="d-inline" onsubmit="return confirm('Delete police station record?')">
+                  <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+
+              <!-- Edit Modal -->
+              <div class="modal fade text-start" id="editStationModal{{ s.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form method="POST" action="{{ url_for('admin.edit_police_station', station_id=s.id) }}">
+                      <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Edit Police Station</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Station Name</label>
+                          <input type="text" class="form-control" name="station_name" value="{{ s.station_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold">Address</label>
+                          <input type="text" class="form-control" name="address" value="{{ s.address }}" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">City</label>
+                            <input type="text" class="form-control" name="city" value="{{ s.city }}" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">State</label>
+                            <input type="text" class="form-control" name="state" value="{{ s.state }}" required>
+                          </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">Latitude</label>
+                            <input type="number" step="any" class="form-control" name="latitude" value="{{ s.latitude }}" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">Longitude</label>
+                            <input type="number" step="any" class="form-control" name="longitude" value="{{ s.longitude }}" required>
+                          </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone Number</label>
+                            <input type="text" class="form-control" name="phone_number" value="{{ s.phone_number or '' }}">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label fw-semibold">Emergency Number</label>
+                            <input type="text" class="form-control" name="emergency_number" value="{{ s.emergency_number }}" required>
+                          </div>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="is_verified" id="verifyEdit{{ s.id }}" {% if s.is_verified %}checked{% endif %}>
+                          <label class="form-check-label fw-semibold" for="verifyEdit{{ s.id }}">Mark Station as Verified</label>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-bold">Update Station</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-4">No police stations registered in database.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Add Police Station Modal -->
+<div class="modal fade" id="addStationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_police_station') }}">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-1"></i> Register Police Station</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Station Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="station_name" required placeholder="e.g. Connaught Place Police Station">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="address" required placeholder="Sector, Street, Landmark">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">City <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="city" required placeholder="City">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">State <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="state" required placeholder="State">
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Latitude <span class="text-danger">*</span></label>
+              <input type="number" step="any" class="form-control" name="latitude" required placeholder="e.g. 28.6315">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Longitude <span class="text-danger">*</span></label>
+              <input type="number" step="any" class="form-control" name="longitude" required placeholder="e.g. 77.2167">
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Landline / Phone</label>
+              <input type="text" class="form-control" name="phone_number" placeholder="Official contact">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Emergency Number</label>
+              <input type="text" class="form-control" name="emergency_number" value="112" required>
+            </div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_verified" id="verifyNew" checked>
+            <label class="form-check-label fw-semibold" for="verifyNew">Mark as Verified Station</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-bold">Register Station</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

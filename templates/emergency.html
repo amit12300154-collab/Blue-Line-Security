@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}EMERGENCY ACTIVE - Blue Line{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Emergency Status Banner -->
+  <div class="card bg-danger text-white mb-4 p-4 shadow border-0 card-emergency-active">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <span class="badge bg-white text-danger fw-bold fs-6 mb-2">STATUS: ALERT ACTIVATED</span>
+        <h1 class="display-6 fw-bold mb-1">🚨 EMERGENCY ACTIVE #{{ alert.id }}</h1>
+        <p class="mb-0 opacity-90">
+          Reported by <strong>{{ current_user.full_name }}</strong> &bull;
+          Type: <strong>{{ alert.emergency_type }}</strong> &bull;
+          Trigger: <strong>{{ alert.trigger_type }}</strong> &bull;
+          Time: {{ alert.created_at.strftime('%Y-%m-%d %I:%M:%S %p UTC') if alert.created_at else 'Just now' }}
+        </p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="tel:{{ helpline.number if helpline else '112' }}" class="btn btn-warning btn-lg fw-bold shadow">
+          <i class="bi bi-telephone-fill"></i> CALL {{ helpline.number if helpline else '112' }}
+        </a>
+        <form method="POST" action="{{ url_for('emergency.resolve_emergency', alert_id=alert.id) }}">
+          <button type="submit" class="btn btn-light btn-lg fw-bold text-success shadow">
+            <i class="bi bi-check-circle-fill"></i> I AM SAFE / RESOLVE
+          </button>
+        </form>
+        <form method="POST" action="{{ url_for('emergency.false_alarm', alert_id=alert.id) }}">
+          <button type="submit" class="btn btn-outline-light btn-sm align-self-center" onclick="return confirm('Mark this alert as a false alarm?')">
+            Mark False Alarm
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Live Interactive Map -->
+    <div class="col-lg-8">
+      <div class="card card-custom p-3 shadow-sm h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="fw-bold mb-0"><i class="bi bi-geo-alt-fill text-danger"></i> Live GPS Location Tracking</h5>
+          <span id="liveTrackBadge" class="badge bg-success"><i class="bi bi-record-circle"></i> Streaming GPS</span>
+        </div>
+        <p class="text-muted small mb-2">
+          Coordinates are continuously broadcast to your emergency contacts. A Google Maps link is generated automatically.
+        </p>
+        
+        <!-- Leaflet Map Container -->
+        <div id="emergencyLiveMap" class="leaflet-map-box" style="height: 440px;"></div>
+
+        <div class="row g-2 mt-2 pt-2 border-top small text-muted">
+          <div class="col-md-4">
+            <strong>Latitude:</strong> <span id="displayLat">{{ alert.latitude or 'Acquiring...' }}</span>
+          </div>
+          <div class="col-md-4">
+            <strong>Longitude:</strong> <span id="displayLon">{{ alert.longitude or 'Acquiring...' }}</span>
+          </div>
+          <div class="col-md-4">
+            <strong>Accuracy:</strong> <span id="displayAcc">{{ alert.accuracy or 'Unknown' }} m</span>
+          </div>
+        </div>
+
+        {% if alert.google_maps_url %}
+        <div class="mt-3">
+          <a href="{{ alert.google_maps_url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Open in Google Maps
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: Police Station, Helplines & Contacts -->
+    <div class="col-lg-4">
+      <!-- Nearest Police Station Card -->
+      <div class="card card-custom p-3 shadow-sm mb-3 border-start border-4 border-primary">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-building-fill-check"></i> Nearest Police Station</h6>
+          <span class="badge bg-info text-dark">Haversine Math</span>
+        </div>
+        {% if nearest_police %}
+        <div class="mb-2">
+          <h5 class="fw-bold mb-0 text-dark">{{ nearest_police.station_name }}</h5>
+          <p class="text-muted small mb-1">{{ nearest_police.address }}, {{ nearest_police.city }}, {{ nearest_police.state }}</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-secondary">Distance: {{ nearest_police.formatted_distance }}</span>
+            {% if nearest_police.is_verified %}
+            <span class="badge bg-success"><i class="bi bi-patch-check-fill"></i> Verified Station</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="alert alert-warning py-1 px-2 small mb-0 mt-2">
+          <strong>Police Notification:</strong> {{ nearest_police.notification_status }}
+        </div>
+        {% else %}
+        <div class="text-muted small">
+          Calculating nearest station upon GPS coordinate resolution...
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Emergency Helpline Card -->
+      <div class="card card-custom p-3 shadow-sm mb-3 border-start border-4 border-danger">
+        <h6 class="fw-bold text-danger mb-2"><i class="bi bi-telephone-fill"></i> National Emergency Services</h6>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="fw-bold mb-0 text-danger">112</h3>
+            <small class="text-muted">National Emergency Helpline (India)</small>
+          </div>
+          <a href="tel:112" class="btn btn-danger fw-bold"><i class="bi bi-telephone-outbound"></i> Call Now</a>
+        </div>
+      </div>
+
+      <!-- Emergency Contacts Dispatched Notification Card -->
+      <div class="card card-custom p-3 shadow-sm">
+        <h6 class="fw-bold mb-2"><i class="bi bi-people-fill text-success"></i> Emergency Contacts Notified</h6>
+        <div class="list-group list-group-flush small">
+          {% for contact in current_user.emergency_contacts if contact.is_active %}
+          <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ contact.name }}</strong> ({{ contact.relationship }})
+              <div class="text-muted">{{ contact.phone }}</div>
+            </div>
+            <span class="badge bg-success"><i class="bi bi-check-all"></i> ALERTED</span>
+          </div>
+          {% else %}
+          <div class="text-muted">No registered contacts. Please add contacts from your dashboard.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const alertId = {{ alert.id }};
+  const initialLat = {{ alert.latitude if alert.latitude is not none else 28.6139 }};
+  const initialLon = {{ alert.longitude if alert.longitude is not none else 77.2090 }};
+  const initialAcc = {{ alert.accuracy if alert.accuracy is not none else 50 }};
+
+  // Initialize Map
+  MapManager.init('emergencyLiveMap', initialLat, initialLon, 15);
+  MapManager.updateUserMarker(initialLat, initialLon, initialAcc, "Live Emergency Beacon");
+
+  // If nearest police station info is present in template
+  {% if nearest_police %}
+  MapManager.setPoliceStationMarker(
+    {{ nearest_police.latitude }},
+    {{ nearest_police.longitude }},
+    {{ nearest_police.station_name|tojson }},
+    {{ nearest_police.address|tojson }},
+    {{ (nearest_police.phone_number or '')|tojson }},
+    {{ nearest_police.formatted_distance|tojson }}
+  );
+  {% endif %}
+
+  // Start Live GPS Streaming
+  LocationManager.startLiveTracking(alertId, (coords) => {
+    document.getElementById('displayLat').textContent = coords.latitude.toFixed(5);
+    document.getElementById('displayLon').textContent = coords.longitude.toFixed(5);
+    document.getElementById('displayAcc').textContent = coords.accuracy ? coords.accuracy.toFixed(1) + ' m' : 'N/A';
+
+    MapManager.updateUserMarker(coords.latitude, coords.longitude, coords.accuracy, "Live Emergency Beacon");
+  });
+});
+</script>
+{% endblock %}
